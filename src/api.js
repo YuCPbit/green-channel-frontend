@@ -44,3 +44,129 @@ export async function currentUser() {
   }
 }
 
+// ==========================================
+// 补助批次 API
+// ==========================================
+
+/**
+ * 分页查询批次列表
+ * @param {Object} params - { batchName, status, page, size }
+ */
+export async function getSubsidyBatches(params = {}) {
+  const query = new URLSearchParams()
+  if (params.batchName) query.set('batchName', params.batchName)
+  if (params.status !== undefined && params.status !== null && params.status !== '') query.set('status', params.status)
+  query.set('page', params.page || 0)
+  query.set('size', params.size || 10)
+  return request(`/api/subsidy/batches?${query.toString()}`)
+}
+
+/**
+ * 创建补助批次
+ * @param {Object} data - { batchName, academicYear, applyStartTime, applyEndTime, collegeSubmitEndTime }
+ */
+export async function createSubsidyBatch(data) {
+  return request('/api/subsidy/batches', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+/**
+ * 更新补助批次（含状态变更）
+ * @param {number} id - 批次ID
+ * @param {Object} data - 批次字段
+ */
+export async function updateSubsidyBatch(id, data) {
+  return request(`/api/subsidy/batches/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  })
+}
+
+/**
+ * 开始批次（DRAFT → ACTIVE）
+ */
+export async function startSubsidyBatch(id) {
+  return request(`/api/subsidy/batches/${id}/start`, { method: 'POST' })
+}
+
+/**
+ * 提前结束批次（ACTIVE → ENDED）
+ */
+export async function endSubsidyBatch(id) {
+  return request(`/api/subsidy/batches/${id}/end`, { method: 'POST' })
+}
+
+// ==========================================
+// 额度分配 API
+// ==========================================
+
+/**
+ * 将 user_type 映射为分配接口需要的角色值
+ * user_type: 4(学校资助中心) -> allocatorRole 1(学校)
+ * user_type: 3(学院管理员)   -> allocatorRole 2(学院)
+ */
+function mapUserTypeToAllocatorRole(userType) {
+  if (userType === 4) return 1  // SCHOOL_ADMIN -> allocator role SCHOOL
+  if (userType === 3) return 2  // COLLEGE_ADMIN -> allocator role COLLEGE
+  return userType
+}
+
+/**
+ * 下发额度（学校→学院 或 学院→年级）
+ * @param {Object} data - { batchId, targetType, targetId, amount }
+ * @param {Object} user - { userType, collegeId }
+ */
+export async function allocateQuota(data, user = {}) {
+  const allocatorRole = mapUserTypeToAllocatorRole(user.userType || 4)
+  return request('/api/subsidy/allocations', {
+    method: 'POST',
+    body: JSON.stringify(data),
+    headers: {
+      'X-User-Id': String(user.id || 1),
+      'X-User-Role': String(allocatorRole),
+      'X-College-Id': String(user.collegeId ?? '')
+    }
+  })
+}
+
+/**
+ * 获取额度看板汇总
+ * @param {number} batchId - 批次ID
+ * @param {Object} user - { userType, collegeId }
+ */
+export async function getAllocationSummary(batchId, user = {}) {
+  const allocatorRole = mapUserTypeToAllocatorRole(user.userType || 4)
+  return request(`/api/subsidy/allocations/summary?batchId=${batchId}`, {
+    headers: {
+      'X-User-Role': String(allocatorRole),
+      'X-College-Id': String(user.collegeId ?? '')
+    }
+  })
+}
+
+/**
+ * 查询分配明细列表
+ * @param {number} batchId - 批次ID
+ * @param {number} targetType - 目标类型：1=学院 2=年级（可选）
+ */
+export async function getAllocationList(batchId, targetType) {
+  let url = `/api/subsidy/allocations?batchId=${batchId}`
+  if (targetType != null) url += `&targetType=${targetType}`
+  return request(url)
+}
+
+/**
+ * 获取学院列表
+ */
+export async function getColleges() {
+  return request('/api/subsidy/allocations/colleges')
+}
+
+/**
+ * 获取年级列表
+ */
+export async function getGrades() {
+  return request('/api/subsidy/allocations/grades')
+}
