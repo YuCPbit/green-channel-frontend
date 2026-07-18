@@ -124,7 +124,6 @@ export async function allocateQuota(data, user = {}) {
     method: 'POST',
     body: JSON.stringify(data),
     headers: {
-      'X-User-Id': String(user.id || 1),
       'X-User-Role': String(allocatorRole),
       'X-College-Id': String(user.collegeId ?? '')
     }
@@ -169,4 +168,90 @@ export async function getColleges() {
  */
 export async function getGrades() {
   return request('/api/subsidy/allocations/grades')
+}
+
+// ==========================================
+// 补助申请与审核 API
+// ==========================================
+
+/**
+ * 获取当前可申请的活跃批次列表
+ */
+export async function getAvailableBatches() {
+  return request('/api/subsidy/batches/available')
+}
+
+/**
+ * 学生提交困难补助申请
+ * @param {Object} data - { batchId, applyAmount, applyReason }
+ */
+export async function submitSubsidyApply(data) {
+  return request('/api/subsidy/applies', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+/**
+ * 辅导员代学生发起补助申请
+ * @param {Object} data - { batchId, studentId, applyAmount, applyReason }
+ */
+export async function submitTutorSubsidyApply(data) {
+  return request('/api/subsidy/applies/tutor', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+/**
+ * 重新提交被退回的申请
+ * @param {number} id
+ * @param {Object} data - { applyAmount, applyReason, batchId }
+ */
+export async function resubmitSubsidyApply(id, data) {
+  return request(`/api/subsidy/applies/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  })
+}
+
+/**
+ * 查询补助申请列表（角色过滤）
+ * @param {Object} params - { batchId, status, studentName, page, size }
+ */
+export async function getSubsidyApplies(params = {}) {
+  const query = new URLSearchParams()
+  if (params.batchId) query.set('batchId', params.batchId)
+  if (params.status !== undefined && params.status !== null && params.status !== '') query.set('status', params.status)
+  if (params.studentName) query.set('studentName', params.studentName)
+  query.set('page', params.page || 1)
+  query.set('size', params.size || 20)
+  return request(`/api/subsidy/applies?${query.toString()}`)
+}
+
+/**
+ * 获取申请详情（含审核时间线）
+ * @param {number} id
+ */
+export async function getSubsidyApplyDetail(id) {
+  return request(`/api/subsidy/applies/${id}`)
+}
+
+/**
+ * 提交审核
+ * @param {Object} data - { applyId, action, comment, suggestAmount }
+ */
+export async function submitSubsidyReview(data) {
+  return request('/api/subsidy/reviews', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+/**
+ * 搜索学生（供辅导员代申请用）
+ * @param {string} keyword - 学号或姓名
+ */
+export async function searchStudents(keyword) {
+  return request(`/api/subsidy/students/search?keyword=${encodeURIComponent(keyword)}`)
 }

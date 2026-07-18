@@ -3,6 +3,10 @@ import { computed, onMounted, ref } from 'vue'
 import { currentUser, login, logout } from './api'
 import BatchManagement from './view/subsidy/BatchManagement.vue'
 import AllocationBoard from './view/subsidy/AllocationBoard.vue'
+import SubsidyApply from './view/subsidy/SubsidyApply.vue'
+import AidReview from './view/subsidy/AidReview.vue'
+import CollegeReview from './view/subsidy/CollegeReview.vue'
+import SchoolReview from './view/subsidy/SchoolReview.vue'
 
 const user = ref(null)
 const username = ref('student01')
@@ -14,7 +18,11 @@ const activeMenu = ref('')
 const menuViewMap = {
   '批次配置': BatchManagement,
   '资金管理': AllocationBoard,
-  '额度管理': AllocationBoard
+  '额度管理': AllocationBoard,
+  '困难补助': SubsidyApply,
+  '资助审核': AidReview,
+  '学院审核': CollegeReview,
+  '学校审核': SchoolReview
 }
 
 const menuDescriptions = {
