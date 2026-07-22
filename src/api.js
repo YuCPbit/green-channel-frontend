@@ -103,46 +103,22 @@ export async function endSubsidyBatch(id) {
 // ==========================================
 
 /**
- * 将 user_type 映射为分配接口需要的角色值
- * user_type: 4(学校资助中心) -> allocatorRole 1(学校)
- * user_type: 3(学院管理员)   -> allocatorRole 2(学院)
- */
-function mapUserTypeToAllocatorRole(userType) {
-  if (userType === 4) return 1  // SCHOOL_ADMIN -> allocator role SCHOOL
-  if (userType === 3) return 2  // COLLEGE_ADMIN -> allocator role COLLEGE
-  return userType
-}
-
-/**
  * 下发额度（学校→学院 或 学院→年级）
  * @param {Object} data - { batchId, targetType, targetId, amount }
- * @param {Object} user - { userType, collegeId }
  */
-export async function allocateQuota(data, user = {}) {
-  const allocatorRole = mapUserTypeToAllocatorRole(user.userType || 4)
+export async function allocateQuota(data) {
   return request('/api/subsidy/allocations', {
     method: 'POST',
-    body: JSON.stringify(data),
-    headers: {
-      'X-User-Role': String(allocatorRole),
-      'X-College-Id': String(user.collegeId ?? '')
-    }
+    body: JSON.stringify(data)
   })
 }
 
 /**
  * 获取额度看板汇总
  * @param {number} batchId - 批次ID
- * @param {Object} user - { userType, collegeId }
  */
-export async function getAllocationSummary(batchId, user = {}) {
-  const allocatorRole = mapUserTypeToAllocatorRole(user.userType || 4)
-  return request(`/api/subsidy/allocations/summary?batchId=${batchId}`, {
-    headers: {
-      'X-User-Role': String(allocatorRole),
-      'X-College-Id': String(user.collegeId ?? '')
-    }
-  })
+export async function getAllocationSummary(batchId) {
+  return request(`/api/subsidy/allocations/summary?batchId=${batchId}`)
 }
 
 /**
