@@ -1,77 +1,99 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
-import { currentUser, login, logout } from './api'
-import BatchManagement from './view/subsidy/BatchManagement.vue'
-import AllocationBoard from './view/subsidy/AllocationBoard.vue'
-import SubsidyApply from './view/subsidy/SubsidyApply.vue'
-import AidReview from './view/subsidy/AidReview.vue'
-import CollegeReview from './view/subsidy/CollegeReview.vue'
-import SchoolReview from './view/subsidy/SchoolReview.vue'
+    import { computed, onMounted, ref } from 'vue'
+    import { currentUser, login, logout } from './api'
+    import StudentApply from './view/green/StudentApply.vue'
+    import GiftReview from './view/green/GiftReview.vue'
+    import BatchManagement from './view/subsidy/BatchManagement.vue'
+    import AllocationBoard from './view/subsidy/AllocationBoard.vue'
+    import SubsidyApply from './view/subsidy/SubsidyApply.vue'
+    import AidReview from './view/subsidy/AidReview.vue'
+    import CollegeReview from './view/subsidy/CollegeReview.vue'
+    import SchoolReview from './view/subsidy/SchoolReview.vue'
 
-const user = ref(null)
-const username = ref('student01')
-const password = ref('Dev@123456')
-const loading = ref(false)
-const error = ref('')
-const activeMenu = ref('')
+    import GiftPackBatchManagement from './view/green/GiftPackBatchManagement.vue'
+    import GreenBatchManagement from './view/green/GreenBatchManagement.vue'
+    import GiftPackItemManagement from './view/green/GiftPackItemManagement.vue'
+    import QuotaManagement from './view/green/QuotaManagement.vue'
+    import PickupManagement from './view/green/PickupManagement.vue'
+    import SupplementManagement from './view/green/SupplementManagement.vue'
 
-const menuViewMap = {
-  '批次配置': BatchManagement,
-  '资金管理': AllocationBoard,
-  '额度管理': AllocationBoard,
-  '困难补助': SubsidyApply,
-  '资助审核': AidReview,
-  '学院审核': CollegeReview,
-  '学校审核': SchoolReview
-}
 
-const menuDescriptions = {
-  '批次配置': '配置学校资助批次的时间、状态与规则。',
-  '资金管理': '查看和管理学校资助资金的分配情况。',
-  '额度管理': '查看学院可用额度并进行分配管理。'
-}
 
-const visibleMenus = computed(() => {
-  if (!user.value) return []
-  const menus = Array.isArray(user.value.menus) ? user.value.menus : []
-  return menus.map((menu) => ({
-    name: menu,
-    active: activeMenu.value === menu
-  }))
-})
+    const user = ref(null)
+    const username = ref('student01')
+    const password = ref('Dev@123456')
+    const loading = ref(false)
+    const error = ref('')
+    const activeMenu = ref('')
 
-const activeView = computed(() => menuViewMap[activeMenu.value] || null)
+    const menuViewMap = {
+        '绿色通道': StudentApply,
+        '绿色通道审核': GiftReview,
+        '批次配置': BatchManagement,
+        '绿色通道批次管理': GreenBatchManagement,
 
-onMounted(async () => {
-  user.value = await currentUser()
-})
+        '大礼包批次管理': GiftPackBatchManagement,
+        '大礼包物品管理': GiftPackItemManagement,
+        '名额分配管理': QuotaManagement,
+        '资金管理': AllocationBoard,
+        '额度管理': AllocationBoard,
+        '困难补助': SubsidyApply,
+        '资助审核': AidReview,
+        '学院审核': CollegeReview,
+        '学校审核': SchoolReview,
+        '礼包核销管理': PickupManagement,
+        '补录管理': SupplementManagement
 
-async function submit() {
-  loading.value = true
-  error.value = ''
-  try {
-    user.value = await login(username.value, password.value)
-    activeMenu.value = ''
-  } catch (requestError) {
-    error.value = requestError.message
-  } finally {
-    loading.value = false
-  }
-}
 
-async function signOut() {
-  await logout()
-  user.value = null
-  activeMenu.value = ''
-}
+    }
 
-function openMenu(menuName) {
-  activeMenu.value = menuName
-}
+    const menuDescriptions = {
+        '批次配置': '配置学校资助批次的时间、状态与规则。',
+        '资金管理': '查看和管理学校资助资金的分配情况。',
+        '额度管理': '查看学院可用额度并进行分配管理。'
+    }
 
-function backToDashboard() {
-  activeMenu.value = ''
-}
+    const visibleMenus = computed(() => {
+        if (!user.value) return []
+        const menus = Array.isArray(user.value.menus) ? user.value.menus : []
+        return menus.map((menu) => ({
+            name: menu,
+            active: activeMenu.value === menu
+        }))
+    })
+
+    const activeView = computed(() => menuViewMap[activeMenu.value] || null)
+
+    onMounted(async () => {
+        user.value = await currentUser()
+    })
+
+    async function submit() {
+        loading.value = true
+        error.value = ''
+        try {
+            user.value = await login(username.value, password.value)
+            activeMenu.value = ''
+        } catch (requestError) {
+            error.value = requestError.message
+        } finally {
+            loading.value = false
+        }
+    }
+
+    async function signOut() {
+        await logout()
+        user.value = null
+        activeMenu.value = ''
+    }
+
+    function openMenu(menuName) {
+        activeMenu.value = menuName
+    }
+
+    function backToDashboard() {
+        activeMenu.value = ''
+    }
 </script>
 
 <template>
