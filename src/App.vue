@@ -7,6 +7,11 @@ import SubsidyApply from './view/subsidy/SubsidyApply.vue'
 import AidReview from './view/subsidy/AidReview.vue'
 import CollegeReview from './view/subsidy/CollegeReview.vue'
 import SchoolReview from './view/subsidy/SchoolReview.vue'
+import FundLedger from './view/subsidy/FundLedger.vue'
+import TutorApply from './view/tutor/TutorApply.vue'
+import TutorReview from './view/tutor/TutorReview.vue'
+import EvaluationManagement from './view/workstudy/EvaluationManagement.vue'
+import MyEvaluations from './view/workstudy/MyEvaluations.vue'
 
 const user = ref(null)
 const username = ref('student01')
@@ -22,13 +27,23 @@ const menuViewMap = {
   '困难补助': SubsidyApply,
   '资助审核': AidReview,
   '学院审核': CollegeReview,
-  '学校审核': SchoolReview
+  '学校审核': SchoolReview,
+  '资金台账': FundLedger,
+  '事务申请': TutorApply,
+  '事务审批': TutorReview,
+  '工作评价管理': EvaluationManagement,
+  '我的工作评价': MyEvaluations
 }
 
 const menuDescriptions = {
   '批次配置': '配置学校资助批次的时间、状态与规则。',
   '资金管理': '查看和管理学校资助资金的分配情况。',
-  '额度管理': '查看学院可用额度并进行分配管理。'
+  '额度管理': '查看学院可用额度并进行分配管理。',
+  '资金台账': '查看和管理补助发放台账，确认发放状态。',
+  '事务申请': '辅导员发起各类事务性申请，查看审批进度。',
+  '事务审批': '审批辅导员提交的事务申请，管理资金下发。',
+  '工作评价管理': '对在岗勤工助学学生进行月度工作评价，查看评价记录。',
+  '我的工作评价': '查看本人在勤工助学岗位上的各月工作评价结果。'
 }
 
 const visibleMenus = computed(() => {

@@ -5,7 +5,8 @@ import {
   getSubsidyApplies,
   submitSubsidyApply,
   getSubsidyApplyDetail,
-  resubmitSubsidyApply
+  resubmitSubsidyApply,
+  getLedgerByApplyId
 } from '../../api'
 
 const props = defineProps({
@@ -37,6 +38,10 @@ const editTarget = ref(null)
 // Detail modal
 const detailTarget = ref(null)
 const detailLoading = ref(false)
+
+// Disbursement status (for approved applications)
+const ledgerStatus = ref(null)
+const ledgerLoading = ref(false)
 
 const statusLabel = (s) => {
   const map = { 1: '待辅导员审核', 2: '待学院审核', 3: '待学校审核', 4: '已通过', 5: '已退回', 6: '不通过' }
@@ -108,8 +113,17 @@ async function submitForm() {
 async function openDetail(apply) {
   detailLoading.value = true
   detailTarget.value = null
+  ledgerStatus.value = null
   try {
     detailTarget.value = await getSubsidyApplyDetail(apply.id)
+    if (detailTarget.value.status === 4) {
+      ledgerLoading.value = true
+      try {
+        ledgerStatus.value = await getLedgerByApplyId(apply.id)
+      } catch (_) {
+        ledgerStatus.value = null
+      } finally { ledgerLoading.value = false }
+    }
   } catch (e) {
     alert('加载详情失败：' + e.message)
   } finally { detailLoading.value = false }
@@ -245,6 +259,28 @@ const totalPages = () => Math.max(1, Math.ceil(totalElements.value / pageSize.va
               </div>
             </div>
           </div>
+
+          <!-- 资金发放状态 (仅已通过的申请) -->
+          <div v-if="detailTarget.status === 4" style="margin-top: 16px;">
+            <h4 style="margin: 20px 0 12px;">资金发放状态</h4>
+            <div v-if="ledgerLoading" class="center-text" style="padding: 8px; color: #999;">加载中…</div>
+            <div v-else-if="!ledgerStatus" class="center-text" style="padding: 8px; color: #999;">暂无发放记录</div>
+            <div v-else class="disburse-status-panel">
+              <div class="disburse-status-row">
+                <span class="disburse-label">发放状态：</span>
+                <span class="status-badge" :class="'status-' + ledgerStatus.disburseStatus">{{ ledgerStatus.disburseStatusName }}</span>
+              </div>
+              <div class="disburse-status-row" v-if="ledgerStatus.disburseTime">
+                <span class="disburse-label">发放时间：</span>
+                <span>{{ formatTime(ledgerStatus.disburseTime) }}</span>
+              </div>
+              <div class="disburse-status-row">
+                <span class="disburse-label">审批金额：</span>
+                <span>{{ formatMoney(ledgerStatus.approvedAmount) }}</span>
+              </div>
+            </div>
+          </div>
+
           <div class="modal-actions" style="margin-top: 20px;">
             <button class="secondary" @click="detailTarget = null">关闭</button>
           </div>
@@ -301,6 +337,9 @@ const totalPages = () => Math.max(1, Math.ceil(totalElements.value / pageSize.va
 .act-2 { background: #fef5e7; color: #b07828; }
 .act-3 { background: #fce8e8; color: #b53f3f; }
 h4 { margin: 0; font-size: 16px; color: #50816d; }
+.disburse-status-panel { background: #f7faf7; border: 1px solid #e7f1eb; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.disburse-status-row { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #16352c; }
+.disburse-label { color: #50816d; font-weight: 600; min-width: 80px; }
 input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 input[type='number'] { -moz-appearance: textfield; }

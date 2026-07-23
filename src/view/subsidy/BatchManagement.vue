@@ -28,10 +28,9 @@ const statusLabel = (status) => {
 }
 
 const subsidyTypeLabel = (type) => {
-  if (type === 1) return '集中批次'
-  if (type === 2) return '动态-大病补助'
-  if (type === 3) return '动态-受灾补助'
-  if (type === 4) return '动态-其他补助'
+  if (type === 1) return '生活补助'
+  if (type === 2) return '路费补助'
+  if (type === 3) return '临时困难补助'
   return '未知'
 }
 
@@ -263,10 +262,9 @@ onMounted(() => {
           <div class="form-row">
             <label>批次类型
               <select v-model="form.subsidyType" required>
-                <option :value="1">集中批次（每学年1次）</option>
-                <option :value="2">动态批次 - 大病补助</option>
-                <option :value="3">动态批次 - 受灾补助</option>
-                <option :value="4">动态批次 - 其他补助</option>
+                <option :value="1">生活补助（每学年1次）</option>
+                <option :value="2">路费补助</option>
+                <option :value="3">临时困难补助</option>
               </select>
             </label>
             <label>总金额 (元)
