@@ -1,24 +1,30 @@
 name: 前端持续集成
 
 on:
-  push:
-    branches: [ main, codex/integrate-a-tasks ]
   pull_request:
-    branches: [ main ]
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
 
 jobs:
   build:
-    name: Vue 自动构建
+    name: npm 生产构建
     runs-on: ubuntu-latest
     steps:
-      - name: 检出代码
+      - name: 拉取代码
         uses: actions/checkout@v4
+
       - name: 配置 Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
           cache: npm
-      - name: 安装依赖
+
+      - name: 安装锁定依赖
         run: npm ci
-      - name: 构建前端
+
+      - name: 运行生产构建
         run: npm run build
