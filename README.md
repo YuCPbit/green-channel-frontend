@@ -33,4 +33,7 @@ GitHub 的“前端持续集成”会在 PR 和 `main` 上自动执行 `npm ci` 
 最终交付基线已完成五角色 87 个业务页面的应用内浏览器逐页检查。详细范围见后端仓库的
 [`前端逐页验收报告`](https://github.com/YuCPbit/green-channel-backend/blob/main/docs/04-%E5%AE%9E%E6%96%BD%E4%B8%8E%E9%AA%8C%E6%94%B6/%E5%89%8D%E7%AB%AF%E9%80%90%E9%A1%B5%E9%AA%8C%E6%94%B6%E6%8A%A5%E5%91%8A-2026-07-25.md)。
 
+业务页面按菜单异步加载，Element Plus 组件按需打包。当前生产构建的最大 JavaScript 块
+低于 200 KB，不再产生 Vite 的 500 KB 大包警告。
+
 本地初始化账号只用于开发。共享、演示或部署前必须重置密码，并清理浏览器中旧的登录令牌。
