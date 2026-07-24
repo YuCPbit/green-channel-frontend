@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import {
   getLedgerList, getLedgerSummary, getLedgerDetail,
   confirmDisburse, batchConfirmDisburse,
-  getSubsidyBatches, getColleges, getLedgerExportUrl
+  getSubsidyBatches, getColleges, downloadSubsidyLedgerExcel
 } from '../../api.js'
 
 const props = defineProps({
@@ -45,6 +45,7 @@ const showBatchDisburseModal = ref(false)
 const selectedIds = ref([])
 const showDetailModal = ref(false)
 const detailTarget = ref(null)
+const exportLoading = ref(false)
 
 const totalPages = computed(() => Math.ceil(totalElements.value / pageSize.value) || 1)
 
@@ -171,13 +172,20 @@ async function openDetail(item) {
 }
 
 // ---- 导出 ----
-function doExport() {
+async function doExport() {
   const params = {
     batchId: filterBatchId.value || undefined,
     disburseStatus: filterDisburseStatus.value !== '' ? filterDisburseStatus.value : undefined,
     collegeId: filterCollegeId.value || undefined
   }
-  window.open(getLedgerExportUrl(params), '_blank')
+  try {
+    exportLoading.value = true
+    await downloadSubsidyLedgerExcel(params)
+  } catch (e) {
+    alert(e.message)
+  } finally {
+    exportLoading.value = false
+  }
 }
 </script>
 

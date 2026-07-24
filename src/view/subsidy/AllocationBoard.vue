@@ -3,7 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import {
   getSubsidyBatches, getAllocationSummary, getAllocationList, allocateQuota, getColleges, getGrades,
   getLedgerList, getLedgerSummary, getLedgerDetail,
-  confirmDisburse, batchConfirmDisburse, getLedgerExportUrl
+  confirmDisburse, batchConfirmDisburse, downloadSubsidyLedgerExcel
 } from '../../api'
 
 const props = defineProps({
@@ -212,6 +212,7 @@ const showBatchDisburseModal = ref(false)
 const ledgerSelectedIds = ref([])
 const showLedgerDetailModal = ref(false)
 const ledgerDetailTarget = ref(null)
+const ledgerExportLoading = ref(false)
 
 const ledgerTotalPages = computed(() => Math.ceil(ledgerTotal.value / ledgerPageSize.value) || 1)
 
@@ -312,13 +313,20 @@ async function openLedgerDetail(item) {
   }
 }
 
-function doLedgerExport() {
+async function doLedgerExport() {
   const params = {
     batchId: ledgerFilterBatchId.value || undefined,
     disburseStatus: ledgerFilterStatus.value !== '' ? Number(ledgerFilterStatus.value) : undefined,
     collegeId: ledgerFilterCollegeId.value || undefined
   }
-  window.open(getLedgerExportUrl(params), '_blank')
+  try {
+    ledgerExportLoading.value = true
+    await downloadSubsidyLedgerExcel(params)
+  } catch (e) {
+    alert(e.message || '导出失败')
+  } finally {
+    ledgerExportLoading.value = false
+  }
 }
 
 // 切换到台账 Tab 时首次加载

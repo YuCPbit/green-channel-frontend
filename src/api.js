@@ -283,16 +283,31 @@ export async function batchConfirmDisburse(data) {
 }
 
 /**
- * 导出台账 Excel（直接打开下载链接）
+ * 导出台账 Excel（fetch + Blob 下载，携带 Authorization header，避免 token 暴露在 URL 中）
  */
-export function getLedgerExportUrl(params = {}) {
+export async function downloadSubsidyLedgerExcel(params = {}) {
   const token = localStorage.getItem('green_channel_token')
   const qs = new URLSearchParams()
   if (params.batchId) qs.set('batchId', params.batchId)
   if (params.disburseStatus !== undefined && params.disburseStatus !== '') qs.set('disburseStatus', params.disburseStatus)
   if (params.collegeId) qs.set('collegeId', params.collegeId)
   const base = window.__API_BASE__ || ''
-  return `${base}/api/subsidy/ledger/export?${qs.toString()}&token=${encodeURIComponent(token)}`
+  const response = await fetch(`${base}/api/subsidy/ledger/export?${qs.toString()}`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  })
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: '导出失败' }))
+    throw new Error(err.message || '导出失败')
+  }
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = '补助发放台账.xlsx'
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
 
 /**
