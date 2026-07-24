@@ -1,6 +1,14 @@
 <template>
     <div class="gift-review">
-        <h3>待审批列表</h3>
+        <h3>{{ isReadOnly ? '绿色通道审批记录' : '待审批列表' }}</h3>
+        <el-alert
+            v-if="isReadOnly"
+            title="系统管理员仅可查看待审批记录，不能代替业务审核人员操作。"
+            type="info"
+            :closable="false"
+            show-icon
+            class="audit-tip"
+        />
 
         <el-card>
             <el-table :data="reviewList" border>
@@ -14,7 +22,7 @@
                     </template>
                 </el-table-column>
                 <el-table-column prop="studentApply.applyReason" label="申请理由" />
-                <el-table-column label="操作" width="180" fixed="right">
+                <el-table-column v-if="!isReadOnly" label="操作" width="180" fixed="right">
                     <template #default="{ row }">
                         <el-button size="small" type="success" @click="handleApprove(row)">通过</el-button>
                         <el-button size="small" type="warning" @click="handleReject(row)">驳回</el-button>
@@ -39,10 +47,12 @@
 </template>
 
 <script setup>
-    import { ref, onMounted } from 'vue'
+    import { computed, ref, onMounted } from 'vue'
     import { ElMessage } from 'element-plus'
     import { getReviewList, reviewOperate } from '../../api'
 
+    const props = defineProps({ userType: Number })
+    const isReadOnly = computed(() => props.userType === 5)
     const reviewList = ref([])
     const dialogVisible = ref(false)
     const dialogTitle = ref('')
@@ -115,5 +125,9 @@
     .gift-review {
         max-width: 1200px;
         padding: 20px;
+    }
+
+    .audit-tip {
+        margin-bottom: 16px;
     }
 </style>

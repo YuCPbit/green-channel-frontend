@@ -191,9 +191,12 @@ async function submit() {
 }
 
 async function signOut() {
-  await logout()
-  user.value = null
-  activeMenu.value = ''
+  try {
+    await logout()
+  } finally {
+    user.value = null
+    activeMenu.value = ''
+  }
 }
 
 function openMenu(menuName) {
