@@ -1,32 +1,33 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
 import { currentUser, login, logout } from './api'
-import StudentApply from './view/green/StudentApply.vue'
-import GiftReview from './view/green/GiftReview.vue'
-import BatchManagement from './view/subsidy/BatchManagement.vue'
-import AllocationBoard from './view/subsidy/AllocationBoard.vue'
-import SubsidyApply from './view/subsidy/SubsidyApply.vue'
-import AidReview from './view/subsidy/AidReview.vue'
-import CollegeReview from './view/subsidy/CollegeReview.vue'
-import SchoolReview from './view/subsidy/SchoolReview.vue'
-import FundLedger from './view/subsidy/FundLedger.vue'
-import TutorApply from './view/tutor/TutorApply.vue'
-import TutorReview from './view/tutor/TutorReview.vue'
-import EvaluationManagement from './view/workstudy/EvaluationManagement.vue'
-import MyEvaluations from './view/workstudy/MyEvaluations.vue'
-import MovementCenter from './view/workstudy/MovementCenter.vue'
-import WorkStudyCenter from './view/workstudy/WorkStudyCenter.vue'
-import SupportCenter from './view/support/SupportCenter.vue'
-import GiftPackBatchManagement from './view/green/GiftPackBatchManagement.vue'
-import GreenBatchManagement from './view/green/GreenBatchManagement.vue'
-import GiftPackItemManagement from './view/green/GiftPackItemManagement.vue'
-import QuotaManagement from './view/green/QuotaManagement.vue'
-import PickupManagement from './view/green/PickupManagement.vue'
-import SupplementManagement from './view/green/SupplementManagement.vue'
-import StudentManagement from './view/platform/StudentManagement.vue'
-import DashboardCenter from './view/platform/DashboardCenter.vue'
-import MessageCenter from './view/platform/MessageCenter.vue'
-import SystemManagement from './view/platform/SystemManagement.vue'
+
+const StudentApply = defineAsyncComponent(() => import('./view/green/StudentApply.vue'))
+const GiftReview = defineAsyncComponent(() => import('./view/green/GiftReview.vue'))
+const BatchManagement = defineAsyncComponent(() => import('./view/subsidy/BatchManagement.vue'))
+const AllocationBoard = defineAsyncComponent(() => import('./view/subsidy/AllocationBoard.vue'))
+const SubsidyApply = defineAsyncComponent(() => import('./view/subsidy/SubsidyApply.vue'))
+const AidReview = defineAsyncComponent(() => import('./view/subsidy/AidReview.vue'))
+const CollegeReview = defineAsyncComponent(() => import('./view/subsidy/CollegeReview.vue'))
+const SchoolReview = defineAsyncComponent(() => import('./view/subsidy/SchoolReview.vue'))
+const FundLedger = defineAsyncComponent(() => import('./view/subsidy/FundLedger.vue'))
+const TutorApply = defineAsyncComponent(() => import('./view/tutor/TutorApply.vue'))
+const TutorReview = defineAsyncComponent(() => import('./view/tutor/TutorReview.vue'))
+const EvaluationManagement = defineAsyncComponent(() => import('./view/workstudy/EvaluationManagement.vue'))
+const MyEvaluations = defineAsyncComponent(() => import('./view/workstudy/MyEvaluations.vue'))
+const MovementCenter = defineAsyncComponent(() => import('./view/workstudy/MovementCenter.vue'))
+const WorkStudyCenter = defineAsyncComponent(() => import('./view/workstudy/WorkStudyCenter.vue'))
+const SupportCenter = defineAsyncComponent(() => import('./view/support/SupportCenter.vue'))
+const GiftPackBatchManagement = defineAsyncComponent(() => import('./view/green/GiftPackBatchManagement.vue'))
+const GreenBatchManagement = defineAsyncComponent(() => import('./view/green/GreenBatchManagement.vue'))
+const GiftPackItemManagement = defineAsyncComponent(() => import('./view/green/GiftPackItemManagement.vue'))
+const QuotaManagement = defineAsyncComponent(() => import('./view/green/QuotaManagement.vue'))
+const PickupManagement = defineAsyncComponent(() => import('./view/green/PickupManagement.vue'))
+const SupplementManagement = defineAsyncComponent(() => import('./view/green/SupplementManagement.vue'))
+const StudentManagement = defineAsyncComponent(() => import('./view/platform/StudentManagement.vue'))
+const DashboardCenter = defineAsyncComponent(() => import('./view/platform/DashboardCenter.vue'))
+const MessageCenter = defineAsyncComponent(() => import('./view/platform/MessageCenter.vue'))
+const SystemManagement = defineAsyncComponent(() => import('./view/platform/SystemManagement.vue'))
 
 const user = ref(null)
 const username = ref('student01')
