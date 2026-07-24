@@ -129,7 +129,9 @@ async function refresh() {
     if (section.value === 'batch') {
       batches.value = await getWorkstudyBatches()
     } else if (section.value === 'position') {
-      batches.value = await getWorkstudyBatches()
+      if (!isStudentPage.value) {
+        batches.value = await getWorkstudyBatches()
+      }
       positions.value = await getWorkstudyPositions()
     } else if (section.value === 'application') {
       if (isStudentPage.value) {

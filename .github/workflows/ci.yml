@@ -1,0 +1,30 @@
+name: 前端持续集成
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: npm 生产构建
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 配置 Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: 安装锁定依赖
+        run: npm ci
+
+      - name: 运行生产构建
+        run: npm run build
