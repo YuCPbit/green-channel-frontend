@@ -13,9 +13,6 @@
                                    :value="batch.id" />
                     </el-select>
                 </el-form-item>
-                <el-form-item label="学生ID">
-                    <el-input v-model="form.studentId" disabled />
-                </el-form-item>
                 <el-form-item label="申请理由">
                     <el-input v-model="form.applyReason" type="textarea" :rows="4" placeholder="请描述申请理由" />
                 </el-form-item>
@@ -53,14 +50,10 @@
 <script setup>
     import { ref, onMounted } from 'vue'
     import { ElMessage } from 'element-plus'
-    import { addApply, getApplyList, getBatchList } from '../../api'
-
-    // 获取当前登录用户
-    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    import { addApply, getApplyList, getGiftPackBatchList } from '../../api'
 
     const form = ref({
         packBatchId: '',
-        studentId: user.id || '',
         applyReason: ''
     })
 
@@ -81,8 +74,9 @@
     // 加载批次列表
     const loadBatches = async () => {
         try {
-            const res = await getBatchList()
-            batchList.value = Array.isArray(res) ? res : res?.records || res?.data || []
+            const res = await getGiftPackBatchList()
+            const allBatches = Array.isArray(res) ? res : res?.records || res?.data || []
+            batchList.value = allBatches.filter(batch => batch.status === 1)
             if (batchList.value.length > 0) {
                 form.value.packBatchId = batchList.value[0].id
             }
@@ -102,19 +96,9 @@
         }
         submitting.value = true
         try {
-            // 生成申请编号
-            const now = new Date()
-            const dateStr = now.getFullYear() +
-                String(now.getMonth() + 1).padStart(2, '0') +
-                String(now.getDate()).padStart(2, '0')
-            const applyNo = 'GIFT' + dateStr + String(Date.now()).slice(-4)
-
             const submitData = {
                 packBatchId: form.value.packBatchId,
-                studentId: form.value.studentId,
-                applyNo: applyNo,  // ← 添加这一行
-                applyReason: form.value.applyReason,
-                status: 2
+                applyReason: form.value.applyReason
             }
             await addApply(submitData)
             ElMessage.success('提交成功')
@@ -129,11 +113,7 @@
 
     const loadApplyList = async () => {
         try {
-            const res = await getApplyList({
-                pageNum: 1,
-                pageSize: 999,
-                studentId: user.id
-            })
+            const res = await getApplyList()
             applyList.value = Array.isArray(res) ? res : res?.records || res?.data || []
         } catch (error) {
             console.error('加载申请列表失败', error)

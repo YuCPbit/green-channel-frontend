@@ -23,6 +23,10 @@ import GiftPackItemManagement from './view/green/GiftPackItemManagement.vue'
 import QuotaManagement from './view/green/QuotaManagement.vue'
 import PickupManagement from './view/green/PickupManagement.vue'
 import SupplementManagement from './view/green/SupplementManagement.vue'
+import StudentManagement from './view/platform/StudentManagement.vue'
+import DashboardCenter from './view/platform/DashboardCenter.vue'
+import MessageCenter from './view/platform/MessageCenter.vue'
+import SystemManagement from './view/platform/SystemManagement.vue'
 
 const user = ref(null)
 const username = ref('student01')
@@ -72,7 +76,18 @@ const menuViewMap = {
   '勤工考勤管理': WorkStudyCenter,
   '勤工薪酬确认': WorkStudyCenter,
   '勤工薪酬管理': WorkStudyCenter,
-  '勤工协议管理': WorkStudyCenter
+  '勤工协议管理': WorkStudyCenter,
+  '学生管理': StudentManagement,
+  '新生管理': StudentManagement,
+  '学院报表': DashboardCenter,
+  '数据看板': DashboardCenter,
+  '消息中心': MessageCenter,
+  '用户管理': SystemManagement,
+  '角色权限': SystemManagement,
+  '字典参数': SystemManagement,
+  '接口监控': SystemManagement,
+  '操作日志': SystemManagement,
+  '事务类型配置': SystemManagement
 }
 
 const menuDescriptions = {
@@ -106,7 +121,18 @@ const menuDescriptions = {
   '勤工考勤管理': '确认正常考勤与补打卡记录。',
   '勤工薪酬确认': '用工部门核对系统核算的月度薪酬。',
   '勤工薪酬管理': '核算、审批并标记勤工助学薪酬发放。',
-  '勤工协议管理': '查询已签协议并维护续签到期日。'
+  '勤工协议管理': '查询已签协议并维护续签到期日。',
+  '学生管理': '查询本人所带班级的学生档案。',
+  '新生管理': '维护新生档案，支持 Excel 导入和错误反馈。',
+  '学院报表': '按本院权限查看资助申请规模与状态分布。',
+  '数据看板': '查看全校资助、礼包和勤工助学核心指标。',
+  '消息中心': '集中查看业务待办、审核结果和发放通知。',
+  '用户管理': '创建、启停账号、分配角色并安全重置密码。',
+  '角色权限': '维护角色及其菜单、按钮权限。',
+  '字典参数': '维护系统下拉选项与业务字典。',
+  '接口监控': '查看外部系统调用结果、耗时和异常。',
+  '操作日志': '审计系统关键增删改操作。',
+  '事务类型配置': '维护辅导员事务申请类型、审批级数和动态表单规则。'
 }
 
 const visibleMenus = computed(() => {
@@ -144,7 +170,7 @@ async function signOut() {
 }
 
 function openMenu(menuName) {
-  activeMenu.value = menuName
+  activeMenu.value = menuName === '首页' ? '' : menuName
 }
 
 function backToDashboard() {

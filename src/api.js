@@ -1112,3 +1112,221 @@ export function renewWorkstudyAgreement(agreementId, newEndDate) {
     method: 'POST'
   })
 }
+
+function appendQuery(path, params = {}) {
+  const query = new URLSearchParams()
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') query.set(key, value)
+  })
+  const suffix = query.toString()
+  return suffix ? `${path}?${suffix}` : path
+}
+
+async function download(path, filename) {
+  const token = localStorage.getItem(TOKEN_KEY)
+  const response = await fetch(path, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  })
+  if (!response.ok) throw new Error('文件下载失败')
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = filename
+  anchor.click()
+  URL.revokeObjectURL(url)
+}
+
+async function downloadPost(path, data, filename) {
+  const token = localStorage.getItem(TOKEN_KEY)
+  const response = await fetch(path, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    },
+    body: JSON.stringify(data)
+  })
+  if (!response.ok) {
+    let message = '文件导出失败'
+    try {
+      const payload = await response.json()
+      message = payload.message || message
+    } catch {
+      // 保留通用错误信息
+    }
+    throw new Error(message)
+  }
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = filename
+  anchor.click()
+  URL.revokeObjectURL(url)
+}
+
+// 基础平台、新生与系统管理 API
+export function getStudents(params = {}) {
+  return request(appendQuery('/api/school/students', params))
+}
+
+export function createStudent(data) {
+  return request('/api/school/students', { method: 'POST', body: JSON.stringify(data) })
+}
+
+export function updateStudent(id, data) {
+  return request(`/api/school/students/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+}
+
+export function deleteStudent(id) {
+  return request(`/api/school/students/${id}`, { method: 'DELETE' })
+}
+
+export function downloadStudentTemplate() {
+  return download('/api/school/students/import-template', '新生导入模板.xlsx')
+}
+
+export async function importStudents(file) {
+  const token = localStorage.getItem(TOKEN_KEY)
+  const form = new FormData()
+  form.append('file', file)
+  const response = await fetch('/api/school/students/import', {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form
+  })
+  const payload = await response.json()
+  if (!response.ok || payload.code !== 0) throw new Error(payload.message || '导入失败')
+  return payload.data
+}
+
+export function getMessages(params = {}) {
+  return request(appendQuery('/api/messages', params))
+}
+
+export function markMessageRead(id) {
+  return request(`/api/messages/${id}/read`, { method: 'PUT' })
+}
+
+export function markAllMessagesRead() {
+  return request('/api/messages/read-all', { method: 'PUT' })
+}
+
+export function getDashboardStats(module = 'base') {
+  return request(appendQuery('/api/dashboard/stats', { module }))
+}
+
+export function getDashboardCollegeCompare() {
+  return request('/api/dashboard/college-compare')
+}
+
+export function getDashboardSubsidyStructure() {
+  return request('/api/dashboard/subsidy-structure')
+}
+
+export function getDashboardYearlyTrend(currentYear) {
+  return request(appendQuery('/api/dashboard/yearly-trend', { currentYear }))
+}
+
+export function getDashboardWorkstudy(type) {
+  return request(`/api/dashboard/ws/${type}`)
+}
+
+export function previewCustomReport(data) {
+  return request('/api/report/preview', { method: 'POST', body: JSON.stringify(data) })
+}
+
+export function exportCustomReport(data, filename = '自定义报表.xlsx') {
+  return downloadPost('/api/report/export', data, filename)
+}
+
+export function getSystemUsers(params = {}) {
+  return request(appendQuery('/api/system/users', params))
+}
+
+export function createSystemUser(data) {
+  return request('/api/system/users', { method: 'POST', body: JSON.stringify(data) })
+}
+
+export function updateSystemUser(id, data) {
+  return request(`/api/system/users/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+}
+
+export function resetSystemUserPassword(id, password) {
+  return request(`/api/system/users/${id}/reset-password`, {
+    method: 'POST',
+    body: JSON.stringify({ password })
+  })
+}
+
+export function getSystemRoles() {
+  return request('/api/system/roles')
+}
+
+export function createSystemRole(data) {
+  return request('/api/system/roles', { method: 'POST', body: JSON.stringify(data) })
+}
+
+export function updateSystemRole(id, data) {
+  return request(`/api/system/roles/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+}
+
+export function getSystemPermissions() {
+  return request('/api/system/permissions')
+}
+
+export function getRbacOverview() {
+  return request('/api/system/rbac/overview')
+}
+
+export function getDictionaries(params = {}) {
+  return request(appendQuery('/api/system/dictionaries', params))
+}
+
+export function createDictionaryItem(data) {
+  return request('/api/system/dictionaries/items', { method: 'POST', body: JSON.stringify(data) })
+}
+
+export function updateDictionaryItem(id, data) {
+  return request(`/api/system/dictionaries/items/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+}
+
+export function deleteDictionaryItem(id) {
+  return request(`/api/system/dictionaries/items/${id}`, { method: 'DELETE' })
+}
+
+export function getSystemConfigs() {
+  return request('/api/system/configs')
+}
+
+export function updateSystemConfig(id, configValue) {
+  return request(`/api/system/configs/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ configValue })
+  })
+}
+
+export function getTutorTypeConfigs() {
+  return request('/api/school/tutor-apply-types')
+}
+
+export function createTutorTypeConfig(data) {
+  return request('/api/school/tutor-apply-types', { method: 'POST', body: JSON.stringify(data) })
+}
+
+export function updateTutorTypeConfig(id, data) {
+  return request(`/api/school/tutor-apply-types/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+}
+
+export function deleteTutorTypeConfig(id) {
+  return request(`/api/school/tutor-apply-types/${id}`, { method: 'DELETE' })
+}
+
+export function getIntegrationCalls(params = {}) {
+  return request(appendQuery('/api/system/integrations/calls', params))
+}
+
+export function getOperationLogs(params = {}) {
+  return request(appendQuery('/api/system/operation-logs', params))
+}
