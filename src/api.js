@@ -40,11 +40,15 @@ export async function logout() {
 }
 
 export async function currentUser() {
-    const userStr = localStorage.getItem('user')
-    if (!userStr) return null
+    const token = localStorage.getItem(TOKEN_KEY)
+    if (!token) return null
     try {
-        return JSON.parse(userStr)
-    } catch {
+        const user = await request('/api/auth/me')
+        localStorage.setItem('user', JSON.stringify(user))
+        return user
+    } catch (error) {
+        localStorage.removeItem(TOKEN_KEY)
+        localStorage.removeItem('user')
         return null
     }
 }
@@ -198,6 +202,30 @@ export async function resubmitSubsidyApply(id, data) {
     })
 }
 
+export async function uploadAttachment(file) {
+    const token = localStorage.getItem(TOKEN_KEY)
+    const form = new FormData()
+    form.append('file', file)
+    const response = await fetch('/api/attachments', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: form
+    })
+    const payload = await response.json()
+    if (!response.ok || payload.code !== 0) {
+        throw new Error(payload.message || '附件上传失败')
+    }
+    return payload.data
+}
+
+export async function getSubsidyApplyAttachments(id) {
+    return request(`/api/subsidy/applies/${id}/attachments`)
+}
+
+export async function downloadAttachmentContent(id, filename) {
+    return download(`/api/attachments/${id}/content`, filename || `附件-${id}`)
+}
+
 
  //查询补助申请列表
  
@@ -238,6 +266,13 @@ export async function searchStudents(keyword) {
 // 提交绿色通道申请
 export async function addApply(data) {
     return request('/api/gift/apply/add', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    })
+}
+
+export async function resubmitGiftApply(data) {
+    return request('/api/gift/apply/resubmit', {
         method: 'POST',
         body: JSON.stringify(data)
     })
@@ -363,8 +398,9 @@ export async function deleteGiftPackBatch(id) {
 
 
 // 获取物品列表
-export async function getItemList() {
-    return request('/api/gift/item/list')
+export async function getItemList(packBatchId) {
+    const suffix = packBatchId ? `?packBatchId=${encodeURIComponent(packBatchId)}` : ''
+    return request(`/api/gift/item/list${suffix}`)
 }
 
 // 新增物品
@@ -450,7 +486,21 @@ export async function pickupReissue(data) {
 
 // 根据领取码查询申请信息
 export async function getApplyByPickupCode(pickupCode) {
-    return request(`/api/gift/apply/list?pickupCode=${pickupCode}`)
+    const query = new URLSearchParams({ pickupCode })
+    return request(`/api/gift/review/pickup/detail?${query.toString()}`)
+}
+
+// 分页查询核销记录
+export async function getPickupRecords(params = {}) {
+    const query = new URLSearchParams()
+    query.set('pageNum', params.pageNum || 1)
+    query.set('pageSize', params.pageSize || 10)
+    if (params.pickupStatus !== undefined
+        && params.pickupStatus !== null
+        && params.pickupStatus !== '') {
+        query.set('pickupStatus', params.pickupStatus)
+    }
+    return request(`/api/gift/review/pickup/records?${query.toString()}`)
 }
 
 
@@ -779,7 +829,7 @@ export async function getEvaluationDetail(id) {
  * @param {Object} data - { hireId, studentId, evalYear, evalMonth, score, comment }
  */
 export async function submitEvaluation(data) {
-  return request('/api/workstudy/evaluation/submit', {
+  return request('/api/workstudy/evaluation', {
     method: 'POST',
     body: JSON.stringify(data)
   })
@@ -896,6 +946,10 @@ export async function publishSatisfactionSurvey(id) {
   return request(`/api/subsidy/surveys/${id}/publish`, { method: 'POST' })
 }
 
+export async function finishSatisfactionSurvey(id) {
+  return request(`/api/subsidy/surveys/${id}/finish`, { method: 'POST' })
+}
+
 export async function getSatisfactionSurveys() {
   return request('/api/subsidy/surveys')
 }
@@ -919,6 +973,13 @@ export async function getMovementPositions() {
 
 export async function createWorkstudyMovement(data) {
   return request('/api/workstudy/movements', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+export async function createWorkstudyDismissal(data) {
+  return request('/api/workstudy/movements/dismissals', {
     method: 'POST',
     body: JSON.stringify(data)
   })

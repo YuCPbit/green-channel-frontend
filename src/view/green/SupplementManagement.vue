@@ -56,7 +56,6 @@ const form = ref({
     applyNo: '',
     applyReason: '',
     pickupCode: '',
-    operatorId: 4, // 学校管理员ID
     remark: '',
     applyTime: ''
 })
@@ -68,7 +67,6 @@ const resetForm = () => {
         applyNo: '',
         applyReason: '',
         pickupCode: '',
-        operatorId: 4,
         remark: '',
         applyTime: ''
     }

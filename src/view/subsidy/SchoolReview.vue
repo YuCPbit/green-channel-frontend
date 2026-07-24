@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref, computed } from 'vue'
 import { getAvailableBatches, getSubsidyApplies, getSubsidyApplyDetail, submitSubsidyReview } from '../../api'
+import AttachmentList from './AttachmentList.vue'
 
 const props = defineProps({ userType: Number, menuName: String, user: Object })
 
@@ -81,6 +82,7 @@ async function openDetail(apply){try{detailTarget.value=await getSubsidyApplyDet
         <p><strong>批次：</strong>{{ reviewTarget.batchName }}</p>
         <p><strong>申请金额：</strong>{{ formatMoney(reviewTarget.applyAmount) }}</p>
         <p><strong>理由：</strong>{{ reviewTarget.applyReason }}</p>
+        <AttachmentList :apply-id="reviewTarget.id" />
         <form @submit.prevent="submitReview">
           <label>审核动作<select v-model="reviewForm.action" required><option :value="1">通过（最终审批）</option><option :value="2">退回修改</option><option :value="3">不通过</option></select></label>
           <label>最终发放金额 (元)<input type="number" v-model="reviewForm.suggestAmount" min="0.01" step="0.01" /></label>
@@ -95,6 +97,7 @@ async function openDetail(apply){try{detailTarget.value=await getSubsidyApplyDet
       <div class="modal-card" style="max-width:620px">
         <h3>申请详情</h3>
         <div class="detail-grid"><div><strong>编号：</strong>{{ detailTarget.applyNo }}</div><div><strong>批次：</strong>{{ detailTarget.batchName }}</div><div><strong>学生：</strong>{{ detailTarget.studentName }}</div><div><strong>学院：</strong>{{ detailTarget.collegeName }}</div><div><strong>金额：</strong>{{ formatMoney(detailTarget.applyAmount) }}</div><div><strong>审批金额：</strong>{{ detailTarget.approvedAmount?formatMoney(detailTarget.approvedAmount):'-' }}</div><div><strong>发起：</strong>{{ applicantLabel(detailTarget.applicantType) }}</div><div><strong>状态：</strong><span class="status-badge" :class="statusClass(detailTarget.status)">{{ statusLabel(detailTarget.status) }}</span></div></div>
+        <AttachmentList :apply-id="detailTarget.id" />
         <h4 style="margin:20px 0 12px">审核时间线</h4>
         <div v-if="!detailTarget.reviews||!detailTarget.reviews.length" style="color:#999;text-align:center;padding:16px">暂无</div>
         <div v-else class="timeline"><div v-for="r in detailTarget.reviews" :key="r.id" class="timeline-item"><div class="timeline-dot" :class="'action-'+r.action"></div><div class="timeline-body"><strong>{{ r.reviewerRoleName }} · {{ r.reviewerName }}</strong><span class="timeline-action" :class="'act-'+r.action">{{ r.actionName }}</span><p v-if="r.suggestAmount" style="margin:4px 0 0">金额：{{ formatMoney(r.suggestAmount) }}</p><p v-if="r.comment" style="margin:4px 0 0;color:#668077">{{ r.comment }}</p><small style="color:#999">{{ formatTime(r.reviewTime) }}</small></div></div></div>

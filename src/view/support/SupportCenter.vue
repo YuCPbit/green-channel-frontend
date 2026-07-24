@@ -6,15 +6,19 @@ import {
   createAppeal,
   createSatisfactionSurvey,
   estimateAidPlan,
+  finishSatisfactionSurvey,
   getAidPlans,
+  getApplyList,
   getMyAppeals,
   getPendingAppeals,
   getSatisfactionSurveySummary,
   getSatisfactionSurveys,
+  getSubsidyApplies,
   handleAppeal,
   publishSatisfactionSurvey,
   resubmitAppeal,
-  submitSatisfactionSurvey
+  submitSatisfactionSurvey,
+  uploadAttachment
 } from '../../api'
 
 const props = defineProps({
@@ -34,6 +38,8 @@ const error = ref('')
 const notice = ref('')
 const plans = ref([])
 const appeals = ref([])
+const appealSources = ref([])
+const appealFiles = ref([])
 const surveys = ref([])
 const surveyAnswers = reactive({})
 
@@ -65,6 +71,10 @@ const surveyForm = reactive({
   endDate: ''
 })
 
+const availableAppealSources = computed(() =>
+  appealSources.value.filter((item) => item.sourceType === appealForm.sourceType)
+)
+
 onMounted(load)
 
 async function load() {
@@ -72,7 +82,34 @@ async function load() {
   error.value = ''
   try {
     if (mode.value === 'plan') plans.value = await getAidPlans()
-    if (mode.value === 'myAppeal') appeals.value = await getMyAppeals()
+    if (mode.value === 'myAppeal') {
+      const [myAppeals, subsidyResult, giftResult] = await Promise.all([
+        getMyAppeals(),
+        getSubsidyApplies({ status: 6, page: 1, size: 100 }),
+        getApplyList({ pageNum: 1, pageSize: 100 })
+      ])
+      appeals.value = myAppeals
+      const subsidyItems = subsidyResult?.items || []
+      const giftItems = Array.isArray(giftResult)
+        ? giftResult
+        : giftResult?.records || giftResult?.data || []
+      appealSources.value = [
+        ...subsidyItems.map((item) => ({
+          sourceType: 'SUBSIDY',
+          id: item.id,
+          label: `困难补助 ${item.applyNo || `#${item.id}`}`
+        })),
+        ...giftItems.filter((item) => Number(item.status) === 7).map((item) => ({
+          sourceType: 'GIFT',
+          id: item.id,
+          label: `爱心大礼包 ${item.applyNo || item.apply_no || `#${item.id}`}`
+        }))
+      ]
+      if (!availableAppealSources.value.some((item) =>
+        String(item.id) === String(appealForm.sourceApplyId))) {
+        appealForm.sourceApplyId = ''
+      }
+    }
     if (mode.value === 'appealReview') appeals.value = await getPendingAppeals()
     if (mode.value === 'surveyAdmin' || mode.value === 'surveyStudent') {
       surveys.value = await getSatisfactionSurveys()
@@ -117,12 +154,18 @@ async function planAction(item, action) {
 
 async function submitAppeal() {
   await run(async () => {
+    const uploaded = []
+    for (const file of appealFiles.value) {
+      uploaded.push(await uploadAttachment(file))
+    }
     await createAppeal({
       ...appealForm,
-      sourceApplyId: Number(appealForm.sourceApplyId)
+      sourceApplyId: Number(appealForm.sourceApplyId),
+      attachmentIds: uploaded.map((item) => item.id)
     })
     appealForm.sourceApplyId = ''
     appealForm.reason = ''
+    appealFiles.value = []
     notice.value = '申诉已提交'
     await load()
   })
@@ -160,6 +203,14 @@ async function publishSurvey(item) {
   await run(async () => {
     await publishSatisfactionSurvey(item.id)
     notice.value = '问卷已发布'
+    await load()
+  })
+}
+
+async function finishSurvey(item) {
+  await run(async () => {
+    await finishSatisfactionSurvey(item.id)
+    notice.value = '问卷已结束'
     await load()
   })
 }
@@ -242,12 +293,23 @@ function statusText(status, kind) {
     <template v-if="mode === 'myAppeal'">
       <form class="card form-grid" @submit.prevent="submitAppeal">
         <h3>提交申诉</h3>
-        <select v-model="appealForm.sourceType">
+        <select v-model="appealForm.sourceType" @change="appealForm.sourceApplyId = ''">
           <option value="SUBSIDY">困难补助</option>
           <option value="GIFT">爱心大礼包</option>
         </select>
-        <input v-model="appealForm.sourceApplyId" required min="1" type="number" placeholder="原申请 ID" />
+        <select v-model="appealForm.sourceApplyId" required>
+          <option disabled value="">请选择本人被“不通过”的申请</option>
+          <option v-for="item in availableAppealSources" :key="`${item.sourceType}-${item.id}`" :value="item.id">
+            {{ item.label }}
+          </option>
+        </select>
         <textarea v-model.trim="appealForm.reason" required placeholder="申诉理由与补充说明"></textarea>
+        <label>补充材料（可多选）
+          <input type="file" multiple @change="appealFiles = Array.from($event.target.files || [])" />
+        </label>
+        <p v-if="availableAppealSources.length === 0">
+          当前没有可申诉的{{ appealForm.sourceType === 'SUBSIDY' ? '补助' : '礼包' }}申请。
+        </p>
         <button type="submit">提交申诉</button>
       </form>
       <div class="card" v-for="item in appeals" :key="item.id">
@@ -264,7 +326,7 @@ function statusText(status, kind) {
         <p>{{ item.source_type }} #{{ item.source_apply_id }}：{{ item.reason }}</p>
         <div class="actions">
           <button v-if="item.status === 1" @click="reviewAppeal(item, 'ACCEPT')">受理</button>
-          <button @click="reviewAppeal(item, 'UPHOLD')">申诉成立</button>
+          <button @click="reviewAppeal(item, 'SUSTAIN')">申诉成立并恢复复核</button>
           <button @click="reviewAppeal(item, 'REJECT')">驳回申诉</button>
           <button @click="reviewAppeal(item, 'RETURN')">退回补充</button>
         </div>
@@ -290,6 +352,7 @@ function statusText(status, kind) {
         <p>{{ item.start_date }} 至 {{ item.end_date }} · {{ item.target_type }}</p>
         <div class="actions">
           <button v-if="item.status === 0" @click="publishSurvey(item)">发布</button>
+          <button v-if="item.status === 1" @click="finishSurvey(item)">结束问卷</button>
           <button @click="showSummary(item)">查看汇总</button>
         </div>
       </div>

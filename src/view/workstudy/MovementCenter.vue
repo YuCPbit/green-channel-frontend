@@ -1,10 +1,13 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import {
+  createWorkstudyDismissal,
   createWorkstudyMovement,
   getMovementPositions,
+  getMyWorkstudyHires,
   getMyWorkstudyMovements,
   getPendingWorkstudyMovements,
+  getWorkstudyHires,
   reviewWorkstudyMovement
 } from '../../api'
 
@@ -12,9 +15,11 @@ const props = defineProps({ menuName: { type: String, default: '' } })
 const isReview = computed(() => props.menuName === '岗位变动审批')
 const items = ref([])
 const positions = ref([])
+const activeHires = ref([])
 const error = ref('')
 const notice = ref('')
 const form = reactive({ hireId: '', movementType: 'LEAVE', targetPositionId: '', reason: '' })
+const dismissalForm = reactive({ hireId: '', reason: '' })
 
 onMounted(load)
 
@@ -22,11 +27,15 @@ async function load() {
   error.value = ''
   try {
     if (isReview.value) {
-      items.value = await getPendingWorkstudyMovements()
+      ;[items.value, activeHires.value] = await Promise.all([
+        getPendingWorkstudyMovements(),
+        getWorkstudyHires({ hireStatus: 1 })
+      ])
     } else {
-      ;[items.value, positions.value] = await Promise.all([
+      ;[items.value, positions.value, activeHires.value] = await Promise.all([
         getMyWorkstudyMovements(),
-        getMovementPositions()
+        getMovementPositions(),
+        getMyWorkstudyHires({ hireStatus: 1 })
       ])
     }
   } catch (e) {
@@ -65,8 +74,28 @@ async function review(item, action) {
   }
 }
 
+async function submitDismissal() {
+  try {
+    error.value = ''
+    await createWorkstudyDismissal({
+      hireId: Number(dismissalForm.hireId),
+      reason: dismissalForm.reason
+    })
+    notice.value = '解聘申请已提交，需在待审批列表中完成审核'
+    dismissalForm.hireId = ''
+    dismissalForm.reason = ''
+    await load()
+  } catch (e) {
+    error.value = e.message
+  }
+}
+
 function statusText(status) {
   return ({ 1: '待审批', 2: '已通过', 3: '已驳回' })[status] || status
+}
+
+function movementText(type) {
+  return ({ TRANSFER: '调岗', LEAVE: '主动离岗', DISMISS: '违规解聘' })[type] || type
 }
 </script>
 
@@ -78,7 +107,12 @@ function statusText(status) {
 
     <form v-if="!isReview" class="card form" @submit.prevent="submit">
       <h3>发起岗位变动</h3>
-      <input v-model="form.hireId" required min="1" type="number" placeholder="当前录用记录 ID" />
+      <select v-model="form.hireId" required>
+        <option disabled value="">请选择当前在岗记录</option>
+        <option v-for="hire in activeHires" :key="hire.id" :value="hire.id">
+          录用 #{{ hire.id }} · 岗位 #{{ hire.positionId }}
+        </option>
+      </select>
       <select v-model="form.movementType">
         <option value="LEAVE">申请离岗</option>
         <option value="TRANSFER">申请调岗</option>
@@ -93,12 +127,25 @@ function statusText(status) {
       <button type="submit">提交审批</button>
     </form>
 
+    <form v-else class="card form" @submit.prevent="submitDismissal">
+      <h3>发起违规解聘</h3>
+      <p>这里只创建待审批单，不会直接改变学生的在岗状态。</p>
+      <select v-model="dismissalForm.hireId" required>
+        <option disabled value="">请选择当前在岗记录</option>
+        <option v-for="hire in activeHires" :key="hire.id" :value="hire.id">
+          录用 #{{ hire.id }} · 学生 #{{ hire.studentId }} · 岗位 #{{ hire.positionId }}
+        </option>
+      </select>
+      <textarea v-model.trim="dismissalForm.reason" required placeholder="违规事实与解聘原因"></textarea>
+      <button type="submit">提交解聘审批</button>
+    </form>
+
     <div class="card" v-for="item in items" :key="item.id">
       <div class="row">
         <strong>{{ item.student_name ? `${item.student_name}（${item.student_no}）` : item.movement_no }}</strong>
         <span>{{ statusText(item.status || 1) }}</span>
       </div>
-      <p>{{ item.movement_type === 'TRANSFER' ? '调岗' : '离岗' }}：{{ item.from_position_name }}<template v-if="item.to_position_name"> → {{ item.to_position_name }}</template></p>
+      <p>{{ movementText(item.movement_type) }}：{{ item.from_position_name }}<template v-if="item.to_position_name"> → {{ item.to_position_name }}</template></p>
       <p>原因：{{ item.reason }}</p>
       <div v-if="isReview" class="actions">
         <button @click="review(item, 'APPROVE')">批准</button>

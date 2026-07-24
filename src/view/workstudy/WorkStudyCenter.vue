@@ -51,6 +51,7 @@ const salaries = ref([])
 const agreements = ref([])
 const selectedPositionId = ref('')
 const selectedHireId = ref('')
+const checkInLocation = ref('')
 const moneyInputs = reactive({})
 const renewalDates = reactive({})
 
@@ -68,7 +69,9 @@ const section = computed(() => {
   return 'position'
 })
 
-const isStudentPage = computed(() => studentMenus.has(props.menuName))
+const isStudentPage = computed(() =>
+  props.user?.userType === 1 && studentMenus.has(props.menuName)
+)
 const can = (permission) => (props.user?.permissions || []).includes(permission)
 
 const batchForm = reactive({
@@ -79,7 +82,7 @@ const batchForm = reactive({
 })
 
 const positionForm = reactive({
-  batchId: '', positionName: '', departmentName: '', departmentId: 1,
+  batchId: '', positionName: '', departmentName: '', departmentId: null,
   description: '', workLocation: '', workTimeDesc: '', maxWeeklyHours: 8,
   positionType: 1, recruitCount: 1, salaryType: 1, salaryRate: 15,
   requirements: '', contactName: '', contactPhone: ''
@@ -246,8 +249,9 @@ async function approveHire(item) {
 
 async function checkIn() {
   await execute(async () => {
-    await checkInWorkstudy(selectedHireId.value, 1, '网页定位演示')
+    await checkInWorkstudy(selectedHireId.value, 1, checkInLocation.value.trim())
     attendance.value = await getMyWorkstudyAttendance()
+    checkInLocation.value = ''
   }, '签到成功')
 }
 
@@ -430,7 +434,8 @@ onMounted(refresh)
         <h3>今日打卡</h3>
         <div class="toolbar">
           <label>在岗记录<select v-model="selectedHireId"><option v-for="h in hires" :key="h.id" :value="h.id">录用 #{{ h.id }} · 岗位 #{{ h.positionId }}</option></select></label>
-          <button :disabled="loading || !selectedHireId" @click="checkIn">签到</button>
+          <label>签到地点<input v-model.trim="checkInLocation" placeholder="例如：图书馆服务台" /></label>
+          <button :disabled="loading || !selectedHireId || !checkInLocation" @click="checkIn">签到</button>
         </div>
       </div>
 

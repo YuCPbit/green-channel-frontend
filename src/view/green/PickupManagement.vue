@@ -67,7 +67,7 @@
         <!-- 领取记录列表 -->
         <el-card>
             <h4>领取记录</h4>
-            <el-table :data="pickupRecords" border>
+            <el-table v-loading="recordsLoading" :data="pickupRecords" border>
                 <el-table-column prop="id" label="申请ID" width="80" />
                 <el-table-column prop="applyNo" label="申请编号" width="160" />
                 <el-table-column prop="pickupCode" label="领取码" width="180" />
@@ -86,6 +86,14 @@
                     </template>
                 </el-table-column>
             </el-table>
+            <el-pagination
+                v-model:current-page="recordsPage"
+                :page-size="recordsPageSize"
+                :total="recordsTotal"
+                layout="total, prev, pager, next"
+                style="margin-top: 16px; justify-content: flex-end;"
+                @current-change="loadPickupRecords"
+            />
         </el-card>
 
         <!-- 异常登记弹窗 -->
@@ -135,7 +143,8 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
-    getApplyList,
+    getApplyByPickupCode,
+    getPickupRecords,
     pickup,
     pickupException,
     pickupReissue
@@ -148,6 +157,10 @@ const searchError = ref('')
 
 // 领取记录
 const pickupRecords = ref([])
+const recordsLoading = ref(false)
+const recordsPage = ref(1)
+const recordsPageSize = 10
+const recordsTotal = ref(0)
 
 // 异常弹窗
 const exceptionDialogVisible = ref(false)
@@ -187,18 +200,11 @@ const searchByPickupCode = async () => {
     }
     searchError.value = ''
     try {
-        const res = await getApplyList({ pageNum: 1, pageSize: 999 })
-        const list = Array.isArray(res) ? res : res?.records || res?.data || []
-        const found = list.find(item => item.pickupCode === pickupCode.value.trim())
-        if (found) {
-            applyInfo.value = found
-            searchError.value = ''
-        } else {
-            applyInfo.value = null
-            searchError.value = '未找到该领取码对应的申请'
-        }
+        applyInfo.value = await getApplyByPickupCode(pickupCode.value.trim())
+        searchError.value = ''
     } catch (error) {
-        ElMessage.error('查询失败')
+        applyInfo.value = null
+        searchError.value = error.message || '查询失败'
     }
 }
 
@@ -210,12 +216,20 @@ const resetSearch = () => {
 
 // 加载领取记录（已领取、异常、已补发的）
 const loadPickupRecords = async () => {
+    recordsLoading.value = true
     try {
-        const res = await getApplyList({ pageNum: 1, pageSize: 999 })
-        const list = Array.isArray(res) ? res : res?.records || res?.data || []
-        pickupRecords.value = list.filter(item => item.pickupStatus > 0)
+        const res = await getPickupRecords({
+            pageNum: recordsPage.value,
+            pageSize: recordsPageSize
+        })
+        pickupRecords.value = res?.records || []
+        recordsTotal.value = Number(res?.total || 0)
     } catch (error) {
+        pickupRecords.value = []
+        recordsTotal.value = 0
         console.error('加载领取记录失败', error)
+    } finally {
+        recordsLoading.value = false
     }
 }
 
@@ -229,11 +243,11 @@ const handlePickup = async () => {
             { confirmButtonText: '确认领取', cancelButtonText: '取消', type: 'success' }
         )
         await pickup({
-            pickupCode: applyInfo.value.pickupCode,
-            operatorId: 5  // 学校管理员ID，暂时写死
+            pickupCode: applyInfo.value.pickupCode
         })
         ElMessage.success('领取成功！')
         resetSearch()
+        recordsPage.value = 1
         loadPickupRecords()
     } catch (error) {
         if (error !== 'cancel') {
@@ -258,12 +272,12 @@ const confirmException = async () => {
     try {
         await pickupException({
             pickupCode: applyInfo.value.pickupCode,
-            operatorId: 5,
             remark: exceptionForm.value.remark
         })
         ElMessage.success('异常登记成功')
         exceptionDialogVisible.value = false
         resetSearch()
+        recordsPage.value = 1
         loadPickupRecords()
     } catch (error) {
         ElMessage.error(error.message || '异常登记失败')
@@ -283,11 +297,11 @@ const handleReissue = async () => {
         )
         await pickupReissue({
             pickupCode: applyInfo.value.pickupCode,
-            operatorId: 5,
             remark: '补发'
         })
         ElMessage.success('补发成功！')
         resetSearch()
+        recordsPage.value = 1
         loadPickupRecords()
     } catch (error) {
         if (error !== 'cancel') {

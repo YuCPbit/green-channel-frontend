@@ -65,8 +65,8 @@
                 <el-form-item label="分配名额数">
                     <el-input-number v-model="form.allocatedQuota" :min="0" style="width:100%" />
                 </el-form-item>
-                <el-form-item label="已使用名额">
-                    <el-input-number v-model="form.usedQuota" :min="0" style="width:100%" />
+                <el-form-item v-if="isEdit" label="已使用名额">
+                    <span>{{ form.usedQuota }}（由申请审核自动累计，不可手工修改）</span>
                 </el-form-item>
             </el-form>
             <template #footer>
@@ -80,7 +80,14 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getQuotaList, addQuota, updateQuota, deleteQuota, getGiftPackBatchList } from '../../api'
+import {
+    getQuotaList,
+    addQuota,
+    updateQuota,
+    deleteQuota,
+    getGiftPackBatchList,
+    getColleges
+} from '../../api'
 
 const tableData = ref([])
 const packBatchList = ref([])
@@ -89,12 +96,7 @@ const dialogTitle = ref('')
 const submitting = ref(false)
 const isEdit = ref(false)
 
-// 学院列表（硬编码，后期可从后端获取）
-const collegeList = ref([
-    { id: 1, collegeName: '计算机学院' },
-    { id: 2, collegeName: '软件学院' },
-    { id: 3, collegeName: '经管学院' }
-])
+const collegeList = ref([])
 
 const form = ref({
     id: null,
@@ -132,6 +134,14 @@ const loadPackBatches = async () => {
         packBatchList.value = Array.isArray(res) ? res : res?.records || res?.data || []
     } catch (error) {
         console.error('加载大礼包批次失败', error)
+    }
+}
+
+const loadColleges = async () => {
+    try {
+        collegeList.value = await getColleges()
+    } catch (error) {
+        ElMessage.error(error.message || '加载学院列表失败')
     }
 }
 
@@ -210,6 +220,7 @@ const handleDelete = (row) => {
 
 onMounted(() => {
     loadPackBatches()
+    loadColleges()
     loadData()
 })
 </script>

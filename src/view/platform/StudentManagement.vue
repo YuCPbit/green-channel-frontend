@@ -4,6 +4,7 @@ import {
   createStudent,
   deleteStudent,
   downloadStudentTemplate,
+  getColleges,
   getStudents,
   importStudents,
   searchTutorStudents,
@@ -15,6 +16,7 @@ const props = defineProps({
 })
 
 const rows = ref([])
+const colleges = ref([])
 const total = ref(0)
 const loading = ref(false)
 const error = ref('')
@@ -29,8 +31,8 @@ const form = reactive({
   phone: '',
   email: '',
   enrollYear: new Date().getFullYear(),
-  collegeId: 1,
-  majorId: 1,
+  collegeId: null,
+  majorId: null,
   classId: null,
   studentType: '本科'
 })
@@ -88,8 +90,8 @@ function resetForm() {
     phone: '',
     email: '',
     enrollYear: new Date().getFullYear(),
-    collegeId: 1,
-    majorId: 1,
+    collegeId: colleges.value[0]?.id ?? null,
+    majorId: null,
     classId: null,
     studentType: '本科'
   })
@@ -134,7 +136,17 @@ async function upload(event) {
   }
 }
 
-onMounted(load)
+async function loadColleges() {
+  if (!canEdit) return
+  try {
+    colleges.value = await getColleges()
+    if (!form.collegeId && colleges.value.length) form.collegeId = colleges.value[0].id
+  } catch {
+    colleges.value = []
+  }
+}
+
+onMounted(() => Promise.all([load(), loadColleges()]))
 </script>
 
 <template>
@@ -162,7 +174,11 @@ onMounted(load)
       <input v-model.trim="form.phone" placeholder="手机号" />
       <input v-model.trim="form.email" type="email" placeholder="邮箱" />
       <input v-model.number="form.enrollYear" required type="number" placeholder="入学年份" />
-      <input v-model.number="form.collegeId" required type="number" placeholder="学院 ID" />
+      <select v-if="colleges.length" v-model.number="form.collegeId" required>
+        <option :value="null" disabled>请选择学院</option>
+        <option v-for="college in colleges" :key="college.id" :value="college.id">{{ college.collegeName }}</option>
+      </select>
+      <input v-else v-model.number="form.collegeId" required type="number" placeholder="学院 ID" />
       <input v-model.number="form.majorId" required type="number" placeholder="专业 ID" />
       <input v-model.number="form.classId" type="number" placeholder="班级 ID" />
       <select v-model="form.studentType"><option>本科</option><option>研究生</option></select>

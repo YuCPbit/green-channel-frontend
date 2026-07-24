@@ -8,6 +8,7 @@ import {
   submitTutorSubsidyApply,
   searchStudents
 } from '../../api'
+import AttachmentList from './AttachmentList.vue'
 
 const props = defineProps({ userType: Number, menuName: String, user: Object })
 
@@ -257,6 +258,7 @@ async function submitProxy() {
         <p><strong>批次：</strong>{{ reviewTarget.batchName }}</p>
         <p><strong>申请金额：</strong>{{ formatMoney(reviewTarget.applyAmount) }}</p>
         <p><strong>理由：</strong>{{ reviewTarget.applyReason }}</p>
+        <AttachmentList :apply-id="reviewTarget.id" />
         <form @submit.prevent="submitReview">
           <label>审核动作
             <select v-model="reviewForm.action" required>
@@ -291,6 +293,7 @@ async function submitProxy() {
           <div><strong>金额：</strong>{{ formatMoney(detailTarget.applyAmount) }}</div>
           <div><strong>发起：</strong>{{ applicantLabel(detailTarget.applicantType) }}</div>
         </div>
+        <AttachmentList :apply-id="detailTarget.id" />
         <h4 style="margin: 20px 0 12px;">审核时间线</h4>
         <div v-if="!detailTarget.reviews || !detailTarget.reviews.length" style="color:#999;text-align:center;padding:16px;">暂无</div>
         <div v-else class="timeline">

@@ -6,7 +6,10 @@ import {
   submitSubsidyApply,
   getSubsidyApplyDetail,
   resubmitSubsidyApply,
-  getLedgerByApplyId
+  getLedgerByApplyId,
+  uploadAttachment,
+  getSubsidyApplyAttachments,
+  downloadAttachmentContent
 } from '../../api'
 
 const props = defineProps({
@@ -31,6 +34,8 @@ const filterStatus = ref('')
 const showModal = ref(false)
 const form = ref({ batchId: '', applyAmount: '', applyReason: '' })
 const saving = ref(false)
+const selectedFiles = ref([])
+const existingAttachments = ref([])
 
 // Edit modal (resubmit after return)
 const editTarget = ref(null)
@@ -38,6 +43,7 @@ const editTarget = ref(null)
 // Detail modal
 const detailTarget = ref(null)
 const detailLoading = ref(false)
+const detailAttachments = ref([])
 
 // Disbursement status (for approved applications)
 const ledgerStatus = ref(null)
@@ -85,25 +91,47 @@ async function loadApplies() {
 function openCreate() {
   editTarget.value = null
   form.value = { batchId: filterBatchId.value || (batches.value.length > 0 ? batches.value[0].id : ''), applyAmount: '', applyReason: '' }
+  selectedFiles.value = []
+  existingAttachments.value = []
   showModal.value = true
 }
 
-function openEdit(apply) {
+async function openEdit(apply) {
   editTarget.value = apply
   form.value = { batchId: apply.batchId, applyAmount: apply.applyAmount, applyReason: apply.applyReason || '' }
+  selectedFiles.value = []
+  try {
+    existingAttachments.value = await getSubsidyApplyAttachments(apply.id)
+  } catch {
+    existingAttachments.value = []
+  }
   showModal.value = true
+}
+
+function onFilesSelected(event) {
+  selectedFiles.value = Array.from(event.target.files || [])
 }
 
 async function submitForm() {
   saving.value = true
   try {
-    const payload = { batchId: Number(form.value.batchId), applyAmount: Number(form.value.applyAmount), applyReason: form.value.applyReason }
+    const uploaded = []
+    for (const file of selectedFiles.value) {
+      uploaded.push(await uploadAttachment(file))
+    }
+    const payload = {
+      batchId: Number(form.value.batchId),
+      applyAmount: Number(form.value.applyAmount),
+      applyReason: form.value.applyReason,
+      attachmentIds: uploaded.map(item => item.id)
+    }
     if (editTarget.value) {
       await resubmitSubsidyApply(editTarget.value.id, payload)
     } else {
       await submitSubsidyApply(payload)
     }
     showModal.value = false
+    selectedFiles.value = []
     await loadApplies()
   } catch (e) {
     alert('操作失败：' + e.message)
@@ -113,9 +141,11 @@ async function submitForm() {
 async function openDetail(apply) {
   detailLoading.value = true
   detailTarget.value = null
+  detailAttachments.value = []
   ledgerStatus.value = null
   try {
     detailTarget.value = await getSubsidyApplyDetail(apply.id)
+    detailAttachments.value = await getSubsidyApplyAttachments(apply.id)
     if (detailTarget.value.status === 4) {
       ledgerLoading.value = true
       try {
@@ -127,6 +157,21 @@ async function openDetail(apply) {
   } catch (e) {
     alert('加载详情失败：' + e.message)
   } finally { detailLoading.value = false }
+}
+
+async function downloadAttachment(item) {
+  try {
+    await downloadAttachmentContent(item.id, item.originalName || item.original_name)
+  } catch (e) {
+    alert('附件下载失败：' + e.message)
+  }
+}
+
+const formatFileSize = (value) => {
+  const size = Number(value || 0)
+  if (size < 1024) return `${size} B`
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
+  return `${(size / 1024 / 1024).toFixed(1)} MB`
 }
 
 function prevPage() { if (currentPage.value > 1) { currentPage.value--; loadApplies() } }
@@ -220,6 +265,27 @@ const totalPages = () => Math.max(1, Math.ceil(totalElements.value / pageSize.va
           <label>申请理由
             <textarea v-model="form.applyReason" required placeholder="请详细说明申请困难补助的原因…" rows="4"></textarea>
           </label>
+          <label>证明材料
+            <input
+              type="file"
+              multiple
+              accept=".pdf,.png,.jpg,.jpeg,.xlsx,.docx"
+              @change="onFilesSelected"
+            />
+            <small>支持 PDF、图片、Word、Excel，单个文件不超过 20 MB。</small>
+          </label>
+          <div v-if="existingAttachments.length" class="attachment-list">
+            <strong>已绑定材料</strong>
+            <span v-for="item in existingAttachments" :key="item.id">
+              {{ item.originalName || item.original_name }}
+            </span>
+          </div>
+          <div v-if="selectedFiles.length" class="attachment-list">
+            <strong>本次新增</strong>
+            <span v-for="file in selectedFiles" :key="`${file.name}-${file.size}`">
+              {{ file.name }}（{{ formatFileSize(file.size) }}）
+            </span>
+          </div>
           <div class="modal-actions">
             <button type="button" class="secondary" @click="showModal = false">取消</button>
             <button type="submit" :disabled="saving">{{ saving ? '提交中…' : '确认提交' }}</button>
@@ -258,6 +324,20 @@ const totalPages = () => Math.max(1, Math.ceil(totalElements.value / pageSize.va
                 <small style="color: #999;">{{ formatTime(r.reviewTime) }}</small>
               </div>
             </div>
+          </div>
+
+          <h4 style="margin: 20px 0 12px;">证明材料</h4>
+          <div v-if="!detailAttachments.length" class="center-text" style="padding: 12px; color: #999;">未上传材料</div>
+          <div v-else class="attachment-list">
+            <button
+              v-for="item in detailAttachments"
+              :key="item.id"
+              type="button"
+              class="text-btn"
+              @click="downloadAttachment(item)"
+            >
+              {{ item.originalName || item.original_name }}（{{ formatFileSize(item.size || item.fileSize || item.file_size) }}）
+            </button>
           </div>
 
           <!-- 资金发放状态 (仅已通过的申请) -->
@@ -340,6 +420,8 @@ h4 { margin: 0; font-size: 16px; color: #50816d; }
 .disburse-status-panel { background: #f7faf7; border: 1px solid #e7f1eb; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
 .disburse-status-row { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #16352c; }
 .disburse-label { color: #50816d; font-weight: 600; min-width: 80px; }
+.attachment-list { display: grid; gap: 8px; padding: 12px; border: 1px solid #dcebe0; border-radius: 12px; background: #f8fbf9; margin-bottom: 14px; }
+.attachment-list span, .attachment-list button { text-align: left; font-size: 13px; }
 input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 input[type='number'] { -moz-appearance: textfield; }
