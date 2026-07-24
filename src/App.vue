@@ -14,6 +14,8 @@ import TutorApply from './view/tutor/TutorApply.vue'
 import TutorReview from './view/tutor/TutorReview.vue'
 import EvaluationManagement from './view/workstudy/EvaluationManagement.vue'
 import MyEvaluations from './view/workstudy/MyEvaluations.vue'
+import MovementCenter from './view/workstudy/MovementCenter.vue'
+import SupportCenter from './view/support/SupportCenter.vue'
 import GiftPackBatchManagement from './view/green/GiftPackBatchManagement.vue'
 import GreenBatchManagement from './view/green/GreenBatchManagement.vue'
 import GiftPackItemManagement from './view/green/GiftPackItemManagement.vue'
@@ -48,7 +50,14 @@ const menuViewMap = {
   '事务申请': TutorApply,
   '事务审批': TutorReview,
   '工作评价管理': EvaluationManagement,
-  '我的工作评价': MyEvaluations
+  '我的工作评价': MyEvaluations,
+  '资助方案管理': SupportCenter,
+  '我的申诉': SupportCenter,
+  '申诉处理': SupportCenter,
+  '问卷管理': SupportCenter,
+  '满意度反馈': SupportCenter,
+  '岗位变动申请': MovementCenter,
+  '岗位变动审批': MovementCenter
 }
 
 const menuDescriptions = {
@@ -61,7 +70,14 @@ const menuDescriptions = {
   '事务申请': '辅导员发起各类事务性申请，查看审批进度。',
   '事务审批': '审批辅导员提交的事务申请，管理资金下发。',
   '工作评价管理': '对在岗勤工助学学生进行月度工作评价，查看评价记录。',
-  '我的工作评价': '查看本人在勤工助学岗位上的各月工作评价结果。'
+  '我的工作评价': '查看本人在勤工助学岗位上的各月工作评价结果。',
+  '资助方案管理': '配置、试运行、发布和下线资助方案。',
+  '我的申诉': '对被不通过的申请在规定窗口内提交申诉。',
+  '申诉处理': '受理并办结当前审核节点的学生申诉。',
+  '问卷管理': '发布资助满意度问卷并查看反馈汇总。',
+  '满意度反馈': '填写资助服务满意度评分和建议。',
+  '岗位变动申请': '提交调岗或离岗申请并查看审批进度。',
+  '岗位变动审批': '审批调岗离岗并联动岗位名额。'
 }
 
 const visibleMenus = computed(() => {

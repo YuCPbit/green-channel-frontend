@@ -826,3 +826,108 @@ export async function getMyEvaluations(params = {}) {
 export async function getActiveHires() {
   return request('/api/workstudy/evaluation/hire/active')
 }
+
+// ==================== A 接管：资助方案、申诉与满意度 ====================
+
+export async function getAidPlans(status) {
+  const query = status === undefined || status === '' ? '' : `?status=${status}`
+  return request(`/api/subsidy/plans${query}`)
+}
+
+export async function createAidPlan(data) {
+  return request('/api/subsidy/plans', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+export async function updateAidPlan(id, data) {
+  return request(`/api/subsidy/plans/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  })
+}
+
+export async function changeAidPlanStatus(id, action) {
+  return request(`/api/subsidy/plans/${id}/${action}`, { method: 'POST' })
+}
+
+export async function estimateAidPlan(id) {
+  return request(`/api/subsidy/plans/${id}/estimate`, { method: 'POST' })
+}
+
+export async function createAppeal(data) {
+  return request('/api/subsidy/appeals', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+export async function getMyAppeals() {
+  return request('/api/subsidy/appeals/my')
+}
+
+export async function getPendingAppeals() {
+  return request('/api/subsidy/appeals/pending')
+}
+
+export async function handleAppeal(id, data) {
+  return request(`/api/subsidy/appeals/${id}/handle`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+export async function createSatisfactionSurvey(data) {
+  return request('/api/subsidy/surveys', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+export async function publishSatisfactionSurvey(id) {
+  return request(`/api/subsidy/surveys/${id}/publish`, { method: 'POST' })
+}
+
+export async function getSatisfactionSurveys() {
+  return request('/api/subsidy/surveys')
+}
+
+export async function submitSatisfactionSurvey(id, data) {
+  return request(`/api/subsidy/surveys/${id}/responses`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+export async function getSatisfactionSurveySummary(id) {
+  return request(`/api/subsidy/surveys/${id}/summary`)
+}
+
+// ==================== A 接管：勤工助学岗位变动 ====================
+
+export async function getMovementPositions() {
+  return request('/api/workstudy/movements/positions')
+}
+
+export async function createWorkstudyMovement(data) {
+  return request('/api/workstudy/movements', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+export async function getMyWorkstudyMovements() {
+  return request('/api/workstudy/movements/my')
+}
+
+export async function getPendingWorkstudyMovements() {
+  return request('/api/workstudy/movements/pending')
+}
+
+export async function reviewWorkstudyMovement(id, data) {
+  return request(`/api/workstudy/movements/${id}/review`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
