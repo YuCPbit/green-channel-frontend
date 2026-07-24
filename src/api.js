@@ -867,6 +867,13 @@ export async function getMyAppeals() {
   return request('/api/subsidy/appeals/my')
 }
 
+export async function resubmitAppeal(id, data) {
+  return request(`/api/subsidy/appeals/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  })
+}
+
 export async function getPendingAppeals() {
   return request('/api/subsidy/appeals/pending')
 }

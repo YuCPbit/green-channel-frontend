@@ -13,6 +13,7 @@ import {
   getSatisfactionSurveys,
   handleAppeal,
   publishSatisfactionSurvey,
+  resubmitAppeal,
   submitSatisfactionSurvey
 } from '../../api'
 
@@ -137,6 +138,16 @@ async function reviewAppeal(item, action) {
   })
 }
 
+async function supplementAppeal(item) {
+  const reason = window.prompt('请填写补充后的申诉理由', item.reason)
+  if (!reason) return
+  await run(async () => {
+    await resubmitAppeal(item.id, { reason, attachmentIds: [] })
+    notice.value = '申诉已补充并重新提交'
+    await load()
+  })
+}
+
 async function submitSurveyConfig() {
   await run(async () => {
     await createSatisfactionSurvey(surveyForm)
@@ -243,6 +254,7 @@ function statusText(status, kind) {
         <div class="row"><strong>{{ item.appeal_no }}</strong><span>{{ statusText(item.status, 'appeal') }}</span></div>
         <p>{{ item.source_type }} #{{ item.source_apply_id }}：{{ item.reason }}</p>
         <p v-if="item.conclusion">处理结论：{{ item.conclusion }}</p>
+        <button v-if="item.status === 5" @click="supplementAppeal(item)">补充后重新提交</button>
       </div>
     </template>
 
