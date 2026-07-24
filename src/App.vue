@@ -15,6 +15,7 @@ import TutorReview from './view/tutor/TutorReview.vue'
 import EvaluationManagement from './view/workstudy/EvaluationManagement.vue'
 import MyEvaluations from './view/workstudy/MyEvaluations.vue'
 import MovementCenter from './view/workstudy/MovementCenter.vue'
+import WorkStudyCenter from './view/workstudy/WorkStudyCenter.vue'
 import SupportCenter from './view/support/SupportCenter.vue'
 import GiftPackBatchManagement from './view/green/GiftPackBatchManagement.vue'
 import GreenBatchManagement from './view/green/GreenBatchManagement.vue'
@@ -25,7 +26,7 @@ import SupplementManagement from './view/green/SupplementManagement.vue'
 
 const user = ref(null)
 const username = ref('student01')
-const password = ref('Dev@123456')
+const password = ref('')
 const loading = ref(false)
 const error = ref('')
 const activeMenu = ref('')
@@ -57,7 +58,21 @@ const menuViewMap = {
   '问卷管理': SupportCenter,
   '满意度反馈': SupportCenter,
   '岗位变动申请': MovementCenter,
-  '岗位变动审批': MovementCenter
+  '岗位变动审批': MovementCenter,
+  '勤工助学岗位': WorkStudyCenter,
+  '我的勤工申请': WorkStudyCenter,
+  '我的勤工考勤': WorkStudyCenter,
+  '我的勤工薪酬': WorkStudyCenter,
+  '我的勤工协议': WorkStudyCenter,
+  '勤工助学批次': WorkStudyCenter,
+  '勤工岗位管理': WorkStudyCenter,
+  '勤工岗位审核': WorkStudyCenter,
+  '勤工面试管理': WorkStudyCenter,
+  '勤工录用审批': WorkStudyCenter,
+  '勤工考勤管理': WorkStudyCenter,
+  '勤工薪酬确认': WorkStudyCenter,
+  '勤工薪酬管理': WorkStudyCenter,
+  '勤工协议管理': WorkStudyCenter
 }
 
 const menuDescriptions = {
@@ -77,7 +92,21 @@ const menuDescriptions = {
   '问卷管理': '发布资助满意度问卷并查看反馈汇总。',
   '满意度反馈': '填写资助服务满意度评分和建议。',
   '岗位变动申请': '提交调岗或离岗申请并查看审批进度。',
-  '岗位变动审批': '审批调岗离岗并联动岗位名额。'
+  '岗位变动审批': '审批调岗离岗并联动岗位名额。',
+  '勤工助学岗位': '浏览已上架岗位，查看名额并在线报名。',
+  '我的勤工申请': '查看本人岗位报名、面试和录用进度。',
+  '我的勤工考勤': '在岗签到签退、查询工时并申请补打卡。',
+  '我的勤工薪酬': '按月查看工时、核算金额与发放状态。',
+  '我的勤工协议': '查看并在线确认签署勤工助学协议。',
+  '勤工助学批次': '创建招聘批次并按报名、面试、上岗状态流转。',
+  '勤工岗位管理': '创建岗位草稿并提交学校审核。',
+  '勤工岗位审核': '审核用工岗位并控制上架状态。',
+  '勤工面试管理': '查看岗位报名、填写推荐并录入面试结果。',
+  '勤工录用审批': '审批面试通过的学生并自动生成协议。',
+  '勤工考勤管理': '确认正常考勤与补打卡记录。',
+  '勤工薪酬确认': '用工部门核对系统核算的月度薪酬。',
+  '勤工薪酬管理': '核算、审批并标记勤工助学薪酬发放。',
+  '勤工协议管理': '查询已签协议并维护续签到期日。'
 }
 
 const visibleMenus = computed(() => {
@@ -143,7 +172,7 @@ function backToDashboard() {
         <p v-if="error" class="error-message">{{ error }}</p>
         <button :disabled="loading" type="submit">{{ loading ? '正在登录…' : '登录系统' }}</button>
       </form>
-      <p class="dev-hint">开发账号：student01 / tutor01 / college01 / school01 / admin01　密码：Dev@123456</p>
+      <p class="dev-hint">本地开发账号见后端初始化数据；演示或部署前请务必修改初始密码。</p>
     </section>
 
     <section v-else class="dashboard">

@@ -938,3 +938,177 @@ export async function reviewWorkstudyMovement(id, data) {
     body: JSON.stringify(data)
   })
 }
+
+// ==================== 勤工助学主流程（D 分支选择性迁移） ====================
+
+function queryString(params = {}) {
+  const query = new URLSearchParams()
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') query.set(key, value)
+  })
+  const text = query.toString()
+  return text ? `?${text}` : ''
+}
+
+export function getWorkstudyBatches() {
+  return request('/api/workstudy/batch/list')
+}
+
+export function createWorkstudyBatch(data) {
+  return request('/api/workstudy/batch', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+export function updateWorkstudyBatchStatus(batchId, status) {
+  return request(`/api/workstudy/batch/${batchId}/status?status=${status}`, { method: 'PUT' })
+}
+
+export function deleteWorkstudyBatch(batchId) {
+  return request(`/api/workstudy/batch/${batchId}`, { method: 'DELETE' })
+}
+
+export function getWorkstudyPositions(params = {}) {
+  return request(`/api/workstudy/position/list${queryString(params)}`)
+}
+
+export function createWorkstudyPosition(data) {
+  return request('/api/workstudy/position', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+export function submitWorkstudyPosition(positionId) {
+  return request(`/api/workstudy/position/${positionId}/submit`, { method: 'PUT' })
+}
+
+export function approveWorkstudyPosition(positionId, approved, rejectReason = '') {
+  return request(`/api/workstudy/position/${positionId}/approve${queryString({ approved, rejectReason })}`, {
+    method: 'PUT'
+  })
+}
+
+export function offlineWorkstudyPosition(positionId) {
+  return request(`/api/workstudy/position/${positionId}/offline`, { method: 'PUT' })
+}
+
+export function submitWorkstudyApply(data) {
+  return request('/api/workstudy/apply', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+export function getMyWorkstudyApplications() {
+  return request('/api/workstudy/apply/my')
+}
+
+export function getPositionWorkstudyApplications(positionId) {
+  return request(`/api/workstudy/apply/position/${positionId}`)
+}
+
+export function recordWorkstudyInterview(applyId, interviewStatus) {
+  return request(`/api/workstudy/apply/${applyId}/interview?interviewStatus=${interviewStatus}`, {
+    method: 'PUT'
+  })
+}
+
+export function recommendWorkstudyApplication(applyId, recommendation) {
+  return request(`/api/workstudy/apply/${applyId}/tutor-recommend?recommendation=${encodeURIComponent(recommendation)}`, {
+    method: 'PUT'
+  })
+}
+
+export function approveWorkstudyHire(applyId) {
+  return request(`/api/workstudy/hire/approve?applyId=${applyId}`, { method: 'POST' })
+}
+
+export function getMyWorkstudyHires(params = {}) {
+  return request(`/api/workstudy/hire/my${queryString(params)}`)
+}
+
+export function getWorkstudyHires(params = {}) {
+  return request(`/api/workstudy/hire/list${queryString(params)}`)
+}
+
+export function leaveWorkstudyHire(hireId, leaveType, reason) {
+  return request(`/api/workstudy/hire/${hireId}/leave${queryString({ leaveType, reason })}`, {
+    method: 'POST'
+  })
+}
+
+export function checkInWorkstudy(hireId, checkType, location) {
+  return request(`/api/workstudy/attendance/check-in${queryString({ hireId, checkType, location })}`, {
+    method: 'POST'
+  })
+}
+
+export function checkOutWorkstudy(attendanceId) {
+  return request(`/api/workstudy/attendance/check-out?attendanceId=${attendanceId}`, {
+    method: 'POST'
+  })
+}
+
+export function repairWorkstudyAttendance(data) {
+  return request(`/api/workstudy/attendance/repair${queryString(data)}`, { method: 'POST' })
+}
+
+export function getMyWorkstudyAttendance(params = {}) {
+  return request(`/api/workstudy/attendance/my${queryString(params)}`)
+}
+
+export function getWorkstudyAttendance(params = {}) {
+  return request(`/api/workstudy/attendance/list${queryString(params)}`)
+}
+
+export function confirmWorkstudyAttendance(attendanceId) {
+  return request(`/api/workstudy/attendance/${attendanceId}/confirm`, { method: 'POST' })
+}
+
+export function calculateWorkstudySalary(year, month) {
+  return request(`/api/workstudy/salary/calculate${queryString({ year, month })}`, { method: 'POST' })
+}
+
+export function getMyWorkstudySalaries() {
+  return request('/api/workstudy/salary/student')
+}
+
+export function getWorkstudySalaries(params = {}) {
+  return request(`/api/workstudy/salary/list${queryString(params)}`)
+}
+
+export function confirmWorkstudySalary(salaryId, confirmedAmount) {
+  return request(`/api/workstudy/salary/${salaryId}/dept-confirm${queryString({ confirmedAmount })}`, {
+    method: 'POST'
+  })
+}
+
+export function approveWorkstudySalary(salaryId, finalAmount) {
+  return request(`/api/workstudy/salary/${salaryId}/school-approve${queryString({ finalAmount })}`, {
+    method: 'POST'
+  })
+}
+
+export function markWorkstudySalaryPaid(salaryId) {
+  return request(`/api/workstudy/salary/${salaryId}/mark-paid`, { method: 'POST' })
+}
+
+export function getMyWorkstudyAgreements() {
+  return request('/api/workstudy/agreement/student')
+}
+
+export function getWorkstudyAgreements(params = {}) {
+  return request(`/api/workstudy/agreement/list${queryString(params)}`)
+}
+
+export function signWorkstudyAgreement(agreementId) {
+  return request(`/api/workstudy/agreement/sign?agreementId=${agreementId}`, { method: 'POST' })
+}
+
+export function renewWorkstudyAgreement(agreementId, newEndDate) {
+  return request(`/api/workstudy/agreement/${agreementId}/renew${queryString({ newEndDate })}`, {
+    method: 'POST'
+  })
+}
